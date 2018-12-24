@@ -94,12 +94,12 @@ class App extends Component {
       },
       {
         type: BISHOP,
-        position: '35',
+        position: '05',
         side: BLACK,
       },
       {
         type: BISHOP,
-        position: '22',
+        position: '72',
         side: WHITE,
       },
       {
@@ -110,7 +110,7 @@ class App extends Component {
 
       {
         type: KNIGHT,
-        position: '01',
+        position: '44',
         side: BLACK,
       },
       {
@@ -418,6 +418,39 @@ class App extends Component {
     return moves
   }
 
+  getKnightMoves = (item) => {
+    const moves = []
+    const coord = this.getCoordFromItem(item)
+
+    const topTwoLeftPos = `${coord[0] - 2}${coord[1] - 1}`
+    const topTwoRightPos = `${coord[0] - 2}${coord[1] + 1}`
+    const topOneLeftPos = `${coord[0] - 1}${coord[1] + 2}`
+    const topOneRightPos = `${coord[0] - 1}${coord[1] - 2}`
+
+    const bottomTwoLeft = `${coord[0] + 2}${coord[1] - 1}`
+    const bottomTwoRight = `${coord[0] + 2}${coord[1] + 1}`
+    const bottomOneLeft = `${coord[0] + 1}${coord[1] - 2}`
+    const bottomOneRight = `${coord[0] + 1}${coord[1] + 2}`
+
+    return moves.concat([
+      topTwoLeftPos,
+      topTwoRightPos,
+      topOneLeftPos,
+      topOneRightPos,
+      bottomTwoLeft,
+      bottomTwoRight,
+      bottomOneLeft,
+      bottomOneRight,
+    ]).filter(pos => {
+      const itemInPos = this.itemOfPos(pos)
+      if(!itemInPos) {
+        return true
+      }
+
+      return itemInPos.side !== item.side
+    })
+  }
+
   isValidMove = (item, pos) => {
     if (item.type === PAWN) {
       return this.getPawnMoves(item).includes(pos)
@@ -429,6 +462,10 @@ class App extends Component {
 
     if (item.type === BISHOP) {
       return this.getBishopMoves(item).includes(pos)
+    }
+
+    if (item.type === KNIGHT) {
+      return this.getKnightMoves(item).includes(pos)
     }
 
     return false
