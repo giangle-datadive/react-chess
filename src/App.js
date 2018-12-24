@@ -110,7 +110,7 @@ class App extends Component {
 
       {
         type: KNIGHT,
-        position: '44',
+        position: '01',
         side: BLACK,
       },
       {
@@ -443,7 +443,7 @@ class App extends Component {
       bottomOneRight,
     ]).filter(pos => {
       const itemInPos = this.itemOfPos(pos)
-      if(!itemInPos) {
+      if (!itemInPos) {
         return true
       }
 
@@ -453,6 +453,22 @@ class App extends Component {
 
   getQueenMoves = (item) => {
     return this.getRockMoves(item).concat(this.getBishopMoves(item))
+  }
+
+  getKingMoves = (item) => {
+    const coord = this.getCoordFromItem(item)
+    const moves = []
+    for (let i = coord[0] - 1; i <= coord[0] + 1; i++) {
+      for (let j = coord[1] - 1; j <= coord[1] + 1; j++) {
+        const pos = `${i}${j}`
+        const itemInPos = this.itemOfPos(pos)
+        if (!itemInPos || itemInPos.side !== item.side) {
+          moves.push(pos)
+        }
+      }
+    }
+
+    return moves
   }
 
   isValidMove = (item, pos) => {
@@ -474,6 +490,10 @@ class App extends Component {
 
     if (item.type === QUEEN) {
       return this.getQueenMoves(item).includes(pos)
+    }
+
+    if (item.type === KING) {
+      return this.getKingMoves(item).includes(pos)
     }
 
     return false
@@ -546,7 +566,6 @@ class App extends Component {
                     onDrop={e => this.onDrop(e, pos)}
                     className={`box ${this.isBlack(index, i) ? 'black' : ''}`}
                   >
-                    {index}{i}
                     {this.renderItem(pos)}
                   </div>
                 )
