@@ -94,12 +94,12 @@ class App extends Component {
       },
       {
         type: BISHOP,
-        position: '05',
+        position: '35',
         side: BLACK,
       },
       {
         type: BISHOP,
-        position: '72',
+        position: '22',
         side: WHITE,
       },
       {
@@ -225,56 +225,56 @@ class App extends Component {
     return items.find(item => item.position === pos)
   }
 
+  getCoordFromItem = (item) => {
+    return item.position.split('').map(item => +item)
+  }
+
   getPawnMoves = (item) => {
-    const currentCoord = item.position.split('').map(item => +item)
+    const coord = this.getCoordFromItem(item)
     const availableMoves = []
     if (item.side === BLACK) {
-      const replaceRight = `${currentCoord[0] + 1}${currentCoord[1] + 1}`
+      const replaceRight = `${coord[0] + 1}${coord[1] + 1}`
       if (this.itemOfPos(replaceRight) && this.itemOfPos(replaceRight).side === WHITE) {
         availableMoves.push(replaceRight)
       }
-      const replaceLeft = `${currentCoord[0] + 1}${currentCoord[1] - 1}`
+      const replaceLeft = `${coord[0] + 1}${coord[1] - 1}`
       if (this.itemOfPos(replaceLeft) && this.itemOfPos(replaceLeft).side === WHITE) {
         availableMoves.push(replaceLeft)
       }
 
-      const nextPos = `${currentCoord[0] + 1}${currentCoord[1]}`
+      const nextPos = `${coord[0] + 1}${coord[1]}`
       if (!this.itemOfPos(nextPos)) {
         availableMoves.push(nextPos)
       }
-      if (currentCoord[0] === 1) {
-        availableMoves.push(`${currentCoord[0] + 2}${currentCoord[1]}`)
+      if (coord[0] === 1) {
+        availableMoves.push(`${coord[0] + 2}${coord[1]}`)
       }
     }
 
     if (item.side === WHITE) {
-      const replaceRight = `${currentCoord[0] - 1}${currentCoord[1] + 1}`
+      const replaceRight = `${coord[0] - 1}${coord[1] + 1}`
       if (this.itemOfPos(replaceRight) && this.itemOfPos(replaceRight).side === BLACK) {
         availableMoves.push(replaceRight)
       }
-      const replaceLeft = `${currentCoord[0] - 1}${currentCoord[1] - 1}`
+      const replaceLeft = `${coord[0] - 1}${coord[1] - 1}`
       if (this.itemOfPos(replaceLeft) && this.itemOfPos(replaceLeft).side === BLACK) {
         availableMoves.push(replaceLeft)
       }
-      const nextPos = `${currentCoord[0] - 1}${currentCoord[1]}`
+      const nextPos = `${coord[0] - 1}${coord[1]}`
       if (!this.itemOfPos(nextPos)) {
         availableMoves.push(nextPos)
       }
-      if (currentCoord[0] === 6) {
-        availableMoves.push(`${currentCoord[0] - 2}${currentCoord[1]}`)
+      if (coord[0] === 6) {
+        availableMoves.push(`${coord[0] - 2}${coord[1]}`)
       }
     }
 
     return availableMoves
   }
 
-  calcRockMove = () => {
-
-  }
-
   getRockMoves = (item) => {
     const availableMoves = []
-    const coord = item.position.split('').map(item => +item)
+    const coord = this.getCoordFromItem(item)
     for (let i = coord[0]; i <= 7; i++) {
       const nextPos = `${i + 1}${coord[1]}`
       const itemInPos = this.itemOfPos(nextPos)
@@ -331,10 +331,91 @@ class App extends Component {
       break
     }
 
-
-    console.log(availableMoves)
-
     return availableMoves
+  }
+
+  getBishopMoves = (item) => {
+    const moves = []
+    const coord = this.getCoordFromItem(item)
+
+    for (let i = coord[0]; i <= 7; i++) {//move down to left
+      const nextY = coord[1] - (i - coord[0] + 1)
+      if (nextY < 0) {
+        break
+      }
+      const nextPos = `${i + 1}${nextY}`
+      const itemInPos = this.itemOfPos(nextPos)
+      if (!itemInPos) {
+        moves.push(nextPos)
+        continue
+      }
+
+      if (itemInPos.side !== item.side) {
+        moves.push(nextPos)
+      }
+
+      break
+    }
+
+    for (let i = coord[0]; i <= 7; i++) { //move down right
+      const nextY = coord[1] + (i - coord[0] + 1)
+      if (nextY > 7) {
+        break
+      }
+
+      const nextPos = `${i + 1}${nextY}`
+      const itemInPos = this.itemOfPos(nextPos)
+      if (!itemInPos) {
+        moves.push(nextPos)
+        continue
+      }
+
+      if (itemInPos.side !== item.side) {
+        moves.push(nextPos)
+      }
+
+      break
+    }
+
+    for (let i = coord[0]; i >= 0; i--) { //move top left
+      const nextY = coord[1] - (coord[0] - i + 1)
+      if (nextY < 0) {
+        break
+      }
+      const nextPos = `${i - 1}${nextY}`
+      const itemInPos = this.itemOfPos(nextPos)
+      if (!itemInPos) {
+        moves.push(nextPos)
+        continue
+      }
+
+      if (itemInPos.side !== item.side) {
+        moves.push(nextPos)
+      }
+
+      break
+    }
+
+    for (let i = coord[0]; i >= 0; i--) { //move top right
+      const nextY = coord[1] + (coord[0] - i + 1)
+      if (nextY > 7) {
+        break
+      }
+      const nextPos = `${i - 1}${nextY}`
+      const itemInPos = this.itemOfPos(nextPos)
+      if (!itemInPos) {
+        moves.push(nextPos)
+        continue
+      }
+
+      if (itemInPos.side !== item.side) {
+        moves.push(nextPos)
+      }
+
+      break
+    }
+
+    return moves
   }
 
   isValidMove = (item, pos) => {
@@ -344,6 +425,10 @@ class App extends Component {
 
     if (item.type === ROCK) {
       return this.getRockMoves(item).includes(pos)
+    }
+
+    if (item.type === BISHOP) {
+      return this.getBishopMoves(item).includes(pos)
     }
 
     return false
@@ -416,6 +501,7 @@ class App extends Component {
                     onDrop={e => this.onDrop(e, pos)}
                     className={`box ${this.isBlack(index, i) ? 'black' : ''}`}
                   >
+                    {index}{i}
                     {this.renderItem(pos)}
                   </div>
                 )
