@@ -451,6 +451,10 @@ class App extends Component {
     })
   }
 
+  getQueenMoves = (item) => {
+    return this.getRockMoves(item).concat(this.getBishopMoves(item))
+  }
+
   isValidMove = (item, pos) => {
     if (item.type === PAWN) {
       return this.getPawnMoves(item).includes(pos)
@@ -466,6 +470,10 @@ class App extends Component {
 
     if (item.type === KNIGHT) {
       return this.getKnightMoves(item).includes(pos)
+    }
+
+    if (item.type === QUEEN) {
+      return this.getQueenMoves(item).includes(pos)
     }
 
     return false
