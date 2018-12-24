@@ -219,6 +219,61 @@ class App extends Component {
     return (rowIndex + columnIndex) % 2 === 1
   }
 
+  itemOfPos = (pos) => {
+    const { items } = this.state
+
+    return items.find(item => item.position === pos)
+  }
+
+  isValidMove = (item, pos) => {
+    const currentCoord = item.position.split('').map(item => +item)
+    if (item.type === PAWN) {
+      const availableMoves = []
+      if (item.side === BLACK) {
+        const replaceRight = `${currentCoord[0] + 1}${currentCoord[1] + 1}`
+        if (this.itemOfPos(replaceRight)) {
+          availableMoves.push(replaceRight)
+        }
+        const replaceLeft = `${currentCoord[0] + 1}${currentCoord[1] - 1}`
+        if(this.itemOfPos(replaceLeft)) {
+          availableMoves.push(replaceLeft)
+        }
+
+        const nextPos = `${currentCoord[0] + 1}${currentCoord[1]}`
+        if (!this.itemOfPos(nextPos)) {
+          availableMoves.push(nextPos)
+        }
+        availableMoves.push(nextPos)
+        if (currentCoord[0] === 1) {
+          availableMoves.push(`${currentCoord[0] + 2}${currentCoord[1]}`)
+        }
+      }
+
+      if (item.side === WHITE) {
+        const replaceRight = `${currentCoord[0] - 1}${currentCoord[1] + 1}`
+        if (this.itemOfPos(replaceRight)) {
+          availableMoves.push(replaceRight)
+        }
+        const replaceLeft = `${currentCoord[0] - 1}${currentCoord[1] - 1}`
+        if(this.itemOfPos(replaceLeft)) {
+          availableMoves.push(replaceLeft)
+        }
+        const nextPos = `${currentCoord[0] - 1}${currentCoord[1]}`
+        if (!this.itemOfPos(nextPos)) {
+          availableMoves.push(nextPos)
+        }
+        availableMoves.push(nextPos)
+        if (currentCoord[0] === 6) {
+          availableMoves.push(`${currentCoord[0] - 2}${currentCoord[1]}`)
+        }
+      }
+
+      return availableMoves.includes(pos)
+    }
+
+    return false
+  }
+
   renderItem = (pos) => {
     const { items } = this.state
     const item = items.find(it => it.position === pos)
@@ -244,6 +299,10 @@ class App extends Component {
 
   onDrop = (e, pos) => {
     const { selectedIndex, items } = this.state
+    const item = items[selectedIndex]
+    if (!this.isValidMove(item, pos)) {
+      return
+    }
     this.setState({
       items: items.map((item, i) => {
         if (i === selectedIndex) {
@@ -269,11 +328,11 @@ class App extends Component {
                 const pos = `${index}${i}`
                 return (
                   <div
+                    key={i}
                     draggable="true"
                     onDragStart={e => this.onDragStart(e, pos)}
                     onDragOver={e => this.onDragOver(e, pos)}
                     onDrop={e => this.onDrop(e, pos)}
-                    onDrag={this.onDrag} key={i}
                     className={`box ${this.isBlack(index, i) ? 'black' : ''}`}
                   >
                     {this.renderItem(pos)}
