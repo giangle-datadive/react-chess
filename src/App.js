@@ -225,50 +225,125 @@ class App extends Component {
     return items.find(item => item.position === pos)
   }
 
-  isValidMove = (item, pos) => {
+  getPawnMoves = (item) => {
     const currentCoord = item.position.split('').map(item => +item)
+    const availableMoves = []
+    if (item.side === BLACK) {
+      const replaceRight = `${currentCoord[0] + 1}${currentCoord[1] + 1}`
+      if (this.itemOfPos(replaceRight) && this.itemOfPos(replaceRight).side === WHITE) {
+        availableMoves.push(replaceRight)
+      }
+      const replaceLeft = `${currentCoord[0] + 1}${currentCoord[1] - 1}`
+      if (this.itemOfPos(replaceLeft) && this.itemOfPos(replaceLeft).side === WHITE) {
+        availableMoves.push(replaceLeft)
+      }
+
+      const nextPos = `${currentCoord[0] + 1}${currentCoord[1]}`
+      if (!this.itemOfPos(nextPos)) {
+        availableMoves.push(nextPos)
+      }
+      if (currentCoord[0] === 1) {
+        availableMoves.push(`${currentCoord[0] + 2}${currentCoord[1]}`)
+      }
+    }
+
+    if (item.side === WHITE) {
+      const replaceRight = `${currentCoord[0] - 1}${currentCoord[1] + 1}`
+      if (this.itemOfPos(replaceRight) && this.itemOfPos(replaceRight).side === BLACK) {
+        availableMoves.push(replaceRight)
+      }
+      const replaceLeft = `${currentCoord[0] - 1}${currentCoord[1] - 1}`
+      if (this.itemOfPos(replaceLeft) && this.itemOfPos(replaceLeft).side === BLACK) {
+        availableMoves.push(replaceLeft)
+      }
+      const nextPos = `${currentCoord[0] - 1}${currentCoord[1]}`
+      if (!this.itemOfPos(nextPos)) {
+        availableMoves.push(nextPos)
+      }
+      if (currentCoord[0] === 6) {
+        availableMoves.push(`${currentCoord[0] - 2}${currentCoord[1]}`)
+      }
+    }
+
+    return availableMoves
+  }
+
+  calcRockMove = () => {
+
+  }
+
+  getRockMoves = (item) => {
+    const availableMoves = []
+    const coord = item.position.split('').map(item => +item)
+    for (let i = coord[0]; i <= 7; i++) {
+      const nextPos = `${i + 1}${coord[1]}`
+      const itemInPos = this.itemOfPos(nextPos)
+      if (!itemInPos) {
+        availableMoves.push(nextPos)
+        continue
+      }
+      if (itemInPos.side !== item.side) {
+        availableMoves.push(nextPos)
+      }
+
+      break
+    }
+
+    for (let i = coord[0]; i >= 0; i--) {
+      const nextPos = `${i - 1}${coord[1]}`
+      const itemInPos = this.itemOfPos(nextPos)
+      if (!itemInPos) {
+        availableMoves.push(nextPos)
+        continue
+      }
+      if (itemInPos.side !== item.side) {
+        availableMoves.push(nextPos)
+      }
+
+      break
+    }
+
+    for (let i = coord[1]; i <= 7; i++) {
+      const nextPos = `${coord[0]}${i + 1}`
+      const itemInPos = this.itemOfPos(nextPos)
+      if (!itemInPos) {
+        availableMoves.push(nextPos)
+        continue
+      }
+      if (itemInPos.side !== item.side) {
+        availableMoves.push(nextPos)
+      }
+
+      break
+    }
+
+    for (let i = coord[1]; i >= 0; i--) {
+      const nextPos = `${coord[0]}${i - 1}`
+      const itemInPos = this.itemOfPos(nextPos)
+      if (!itemInPos) {
+        availableMoves.push(nextPos)
+        continue
+      }
+      if (itemInPos.side !== item.side) {
+        availableMoves.push(nextPos)
+      }
+
+      break
+    }
+
+
+    console.log(availableMoves)
+
+    return availableMoves
+  }
+
+  isValidMove = (item, pos) => {
     if (item.type === PAWN) {
-      const availableMoves = []
-      if (item.side === BLACK) {
-        const replaceRight = `${currentCoord[0] + 1}${currentCoord[1] + 1}`
-        if (this.itemOfPos(replaceRight)) {
-          availableMoves.push(replaceRight)
-        }
-        const replaceLeft = `${currentCoord[0] + 1}${currentCoord[1] - 1}`
-        if(this.itemOfPos(replaceLeft)) {
-          availableMoves.push(replaceLeft)
-        }
+      return this.getPawnMoves(item).includes(pos)
+    }
 
-        const nextPos = `${currentCoord[0] + 1}${currentCoord[1]}`
-        if (!this.itemOfPos(nextPos)) {
-          availableMoves.push(nextPos)
-        }
-        availableMoves.push(nextPos)
-        if (currentCoord[0] === 1) {
-          availableMoves.push(`${currentCoord[0] + 2}${currentCoord[1]}`)
-        }
-      }
-
-      if (item.side === WHITE) {
-        const replaceRight = `${currentCoord[0] - 1}${currentCoord[1] + 1}`
-        if (this.itemOfPos(replaceRight)) {
-          availableMoves.push(replaceRight)
-        }
-        const replaceLeft = `${currentCoord[0] - 1}${currentCoord[1] - 1}`
-        if(this.itemOfPos(replaceLeft)) {
-          availableMoves.push(replaceLeft)
-        }
-        const nextPos = `${currentCoord[0] - 1}${currentCoord[1]}`
-        if (!this.itemOfPos(nextPos)) {
-          availableMoves.push(nextPos)
-        }
-        availableMoves.push(nextPos)
-        if (currentCoord[0] === 6) {
-          availableMoves.push(`${currentCoord[0] - 2}${currentCoord[1]}`)
-        }
-      }
-
-      return availableMoves.includes(pos)
+    if (item.type === ROCK) {
+      return this.getRockMoves(item).includes(pos)
     }
 
     return false
@@ -318,6 +393,12 @@ class App extends Component {
     })
   }
 
+  canDrag = (pos) => {
+    const { items } = this.state
+
+    return items.some((item) => item.position === pos)
+  }
+
   render() {
     return (
       <div className="App">
@@ -329,7 +410,7 @@ class App extends Component {
                 return (
                   <div
                     key={i}
-                    draggable="true"
+                    draggable={this.canDrag(`${index}${i}`)}
                     onDragStart={e => this.onDragStart(e, pos)}
                     onDragOver={e => this.onDragOver(e, pos)}
                     onDrop={e => this.onDrop(e, pos)}
