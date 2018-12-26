@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import classnames from 'classnames'
 import './App.scss'
 
 const arr = [...Array(8)]
@@ -213,6 +214,8 @@ class App extends Component {
       },
     ],
     selectedIndex: null,
+    availableMoves: [],
+    currentSide: WHITE,
   }
 
   isBlack = (rowIndex, columnIndex) => {
@@ -419,7 +422,6 @@ class App extends Component {
   }
 
   getKnightMoves = (item) => {
-    const moves = []
     const coord = this.getCoordFromItem(item)
 
     const topTwoLeftPos = `${coord[0] - 2}${coord[1] - 1}`
@@ -432,7 +434,7 @@ class App extends Component {
     const bottomOneLeft = `${coord[0] + 1}${coord[1] - 2}`
     const bottomOneRight = `${coord[0] + 1}${coord[1] + 2}`
 
-    return moves.concat([
+    return [
       topTwoLeftPos,
       topTwoRightPos,
       topOneLeftPos,
@@ -441,7 +443,7 @@ class App extends Component {
       bottomTwoRight,
       bottomOneLeft,
       bottomOneRight,
-    ]).filter(pos => {
+    ].filter(pos => {
       const itemInPos = this.itemOfPos(pos)
       if (!itemInPos) {
         return true
@@ -471,32 +473,21 @@ class App extends Component {
     return moves
   }
 
+  getMoves = (item) => {
+    const obj = {
+      [PAWN]: () => this.getPawnMoves(item),
+      [ROCK]: () => this.getRockMoves(item),
+      [BISHOP]: () => this.getBishopMoves(item),
+      [KNIGHT]: () => this.getKnightMoves(item),
+      [QUEEN]: () => this.getQueenMoves(item),
+      [KING]: () => this.getKingMoves(item),
+    }
+
+    return obj[item.type]()
+  }
+
   isValidMove = (item, pos) => {
-    if (item.type === PAWN) {
-      return this.getPawnMoves(item).includes(pos)
-    }
-
-    if (item.type === ROCK) {
-      return this.getRockMoves(item).includes(pos)
-    }
-
-    if (item.type === BISHOP) {
-      return this.getBishopMoves(item).includes(pos)
-    }
-
-    if (item.type === KNIGHT) {
-      return this.getKnightMoves(item).includes(pos)
-    }
-
-    if (item.type === QUEEN) {
-      return this.getQueenMoves(item).includes(pos)
-    }
-
-    if (item.type === KING) {
-      return this.getKingMoves(item).includes(pos)
-    }
-
-    return false
+    return this.getMoves(item).includes(pos)
   }
 
   renderItem = (pos) => {
@@ -512,14 +503,26 @@ class App extends Component {
   }
 
   onDragStart = (e, pos) => {
+    e.dataTransfer.effectAllowed = 'copyMove'
+    const { items, currentSide } = this.state
     const index = this.indexOfPos(pos)
+    const item = items[index]
+    if (item.side !== currentSide) {
+      e.preventDefault()
+      return
+    }
     this.setState({
       selectedIndex: index,
+      availableMoves: this.getMoves(item),
     })
   }
 
   onDragOver = (e) => {
     e.preventDefault()
+  }
+
+  onDragEnter = (e) => {
+    e.dataTransfer.dropEffect = 'copy'
   }
 
   onDrop = (e, pos) => {
@@ -528,6 +531,50 @@ class App extends Component {
     if (!this.isValidMove(item, pos)) {
       return
     }
+    this.handleMove(pos, selectedIndex)
+    this.setState({
+      availableMoves: [],
+    })
+  }
+
+  onDragEnd = () => {
+    this.setState({
+      selectedIndex: null,
+      availableMoves: [],
+    })
+  }
+
+  onBoxClick = (e, pos) => {
+    const { items, selectedIndex, currentSide, availableMoves } = this.state
+    const itemIndex = this.indexOfPos(pos)
+    const item = items[itemIndex]
+    const moves = item ? this.getMoves(item) : []
+    if (selectedIndex === null && item) {
+      this.setState({
+        selectedIndex: itemIndex,
+        availableMoves: moves,
+      })
+      return
+    }
+
+    if (item && item.side === currentSide) {
+      this.setState({
+        selectedIndex: itemIndex,
+        availableMoves: moves,
+      })
+      console.log(1111)
+      return
+    }
+    if (!availableMoves.includes(pos)) {
+      return
+    }
+
+
+    this.handleMove(pos, selectedIndex)
+  }
+
+  handleMove = (pos, selectedIndex) => {
+    const { items, currentSide } = this.state
     this.setState({
       items: items.map((item, i) => {
         if (i === selectedIndex) {
@@ -540,16 +587,13 @@ class App extends Component {
         return item
       }),
       selectedIndex: null,
+      currentSide: currentSide === BLACK ? WHITE : BLACK,
+      availableMoves: [],
     })
   }
 
-  canDrag = (pos) => {
-    const { items } = this.state
-
-    return items.some((item) => item.position === pos)
-  }
-
   render() {
+    const { availableMoves } = this.state
     return (
       <div className="App">
         <div className="chess">
@@ -560,12 +604,19 @@ class App extends Component {
                 return (
                   <div
                     key={i}
-                    draggable={this.canDrag(`${index}${i}`)}
+                    onClick={(e) => this.onBoxClick(e, pos)}
+                    draggable={false}
+                    onDragEnter={this.onDragEnter}
                     onDragStart={e => this.onDragStart(e, pos)}
                     onDragOver={e => this.onDragOver(e, pos)}
                     onDrop={e => this.onDrop(e, pos)}
-                    className={`box ${this.isBlack(index, i) ? 'black' : ''}`}
+                    onDragEnd={this.onDragEnd}
+                    className={classnames('box', {
+                      black: this.isBlack(index, i),
+                      available: availableMoves.includes(pos)
+                    })}
                   >
+                    <div className="circle" />
                     {this.renderItem(pos)}
                   </div>
                 )
